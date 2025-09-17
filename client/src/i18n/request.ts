@@ -11,6 +11,7 @@ export default getRequestConfig(async ({ requestLocale }): Promise<RequestConfig
 
     const messages = {
         ...(await import(`../../messages/${locale}/common.json`)).default,
+        ...(await import(`../../messages/${locale}/auth.json`)).default,
     }
 
     return {
