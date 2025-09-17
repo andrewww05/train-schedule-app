@@ -1,0 +1,150 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+model Language {
+  id   String @id @default(uuid())
+  code String @unique
+  name String
+
+  createdAt     DateTime        @default(now()) @map("created_at")
+  updatedAt     DateTime        @updatedAt @map("updated_at")
+  cityLocale    CityLocale[]
+  stationLocale StationLocale[]
+  TrainLocale   TrainLocale[]
+
+  @@map("languages")
+}
+
+model User {
+  id           String  @id @default(uuid())
+  email        String  @unique
+  name         String?
+  passwordHash String  @map("password_hash")
+  role         Role
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("users")
+}
+
+model City {
+  id      String       @id @default(uuid())
+  locales CityLocale[]
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  stations  Station[]
+
+  @@map("cities")
+}
+
+model CityLocale {
+  id         String @id @default(uuid())
+  cityId     String @map("city_id")
+  languageId String @map("language_id")
+  name       String
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  city     City     @relation(fields: [cityId], references: [id])
+  language Language @relation(fields: [languageId], references: [id])
+
+  @@map("city_locales")
+}
+
+model Station {
+  id     String @id @default(uuid())
+  name   String
+  cityId String @map("city_id")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  city               City            @relation(fields: [cityId], references: [id])
+  locales            StationLocale[]
+  departureSchedules Schedules[]     @relation("DepartureStationSchedules")
+  arrivalSchedules   Schedules[]     @relation("ArrivalStationSchedules")
+
+  @@map("stations")
+}
+
+model StationLocale {
+  id         String @id @default(uuid())
+  stationId  String @map("station_id")
+  languageId String @map("language_id")
+  name       String
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  station  Station  @relation(fields: [stationId], references: [id])
+  language Language @relation(fields: [languageId], references: [id])
+
+  @@map("station_locales")
+}
+
+model Train {
+  id          String @id @default(uuid())
+  trainNumber String
+
+  createdAt DateTime      @default(now()) @map("created_at")
+  updatedAt DateTime      @updatedAt @map("updated_at")
+  locales   TrainLocale[]
+  Schedules Schedules[]
+
+  @@map("trains")
+}
+
+model TrainLocale {
+  id         String @id @default(uuid())
+  trainId    String @map("train_id")
+  languageId String @map("language_id")
+  title      String
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  train    Train    @relation(fields: [trainId], references: [id])
+  language Language @relation(fields: [languageId], references: [id])
+
+  @@map("train_locales")
+}
+
+model Schedules {
+  id                 String   @id @default(uuid())
+  trainId            String   @map("train_id")
+  departureStationId String   @map("departure_station_id")
+  arrivalStationId   String   @map("arrival_station_id")
+  departureTime      DateTime @map("departure_time")
+  arrivalTime        DateTime @map("arrival_time")
+  price              Decimal
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  train            Train   @relation(fields: [trainId], references: [id])
+  departureStation Station @relation("DepartureStationSchedules", fields: [departureStationId], references: [id])
+  arrivalStation   Station @relation("ArrivalStationSchedules", fields: [arrivalStationId], references: [id])
+
+  @@map("schedules")
+}
