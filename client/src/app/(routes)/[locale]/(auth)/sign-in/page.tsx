@@ -11,9 +11,27 @@ import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import Card from '@/app/_components/Card';
 import { useTranslations } from 'next-intl';
+import { Controller, SubmitHandler, useForm } from 'react-hook-form';
+
+interface IFormInput {
+  email: string
+  password: string
+}
+
 
 export default function SignIn(props: { disableCustomTheme?: boolean }) {
     const [errors, setErrors] = useState<{ email: boolean, password: boolean }>({ email: false, password: false });
+
+    const { control, handleSubmit } = useForm({
+        defaultValues: {
+            email: "",
+            password: ""
+        },
+    })
+
+    const onSubmit: SubmitHandler<IFormInput> = (data) => {
+        console.log(data)
+    }
 
     const t = useTranslations("auth");
 
@@ -29,7 +47,7 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
                 </Typography>
                 <Box
                     component="form"
-                    // onSubmit={handleSubmit}
+                    onSubmit={handleSubmit(onSubmit)}
                     noValidate
                     sx={{
                         display: 'flex',
@@ -40,38 +58,45 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
                 >
                     <FormControl>
                         <FormLabel htmlFor="email">{t("email")}</FormLabel>
-                        <TextField
-                            error={errors.email}
-                            // helperText={emailErrorMessage}
-                            id="email"
-                            type="email"
+                        <Controller
                             name="email"
-                            size="small"
-                            placeholder={t("email_placeholder")}
-                            autoComplete="email"
-                            autoFocus
-                            required
-                            fullWidth
-                            variant="outlined"
-                            color={errors.email ? 'error' : 'primary'}
+                            control={control}
+                            render={({ field }) => (
+                                <TextField
+                                    id="email"
+                                    type="email"
+                                    size="small"
+                                    placeholder={t("email_placeholder")}
+                                    autoComplete="email"
+                                    autoFocus
+                                    required
+                                    fullWidth
+                                    variant="outlined"
+                                    {...field}
+                                />
+                            )} 
                         />
                     </FormControl>
                     <FormControl>
                         <FormLabel htmlFor="password">{t("password")}</FormLabel>
-                        <TextField
-                            error={errors.password}
-                            // helperText={passwordErrorMessage}
+                        <Controller
                             name="password"
-                            size="small"
-                            placeholder="••••••••••••"
-                            type="password"
-                            id="password"
-                            autoComplete="current-password"
-                            autoFocus
-                            required
-                            fullWidth
-                            variant="outlined"
-                            color={errors.password ? 'error' : 'primary'}
+                            control={control}
+                            render={({ field }) => (
+                                <TextField
+                                    {...field}
+                                    size="small"
+                                    placeholder="••••••••••••"
+                                    type="password"
+                                    id="password"
+                                    autoComplete="current-password"
+                                    autoFocus
+                                    required
+                                    fullWidth
+                                    variant="outlined"
+                                    color={errors.password ? 'error' : 'primary'}
+                                />
+                            )} 
                         />
                     </FormControl>
                     <Button
