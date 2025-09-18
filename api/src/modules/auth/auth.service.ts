@@ -28,8 +28,8 @@ export class AuthService {
     return null;
   }
 
-  public async login(user: User) {
-    const payload = { email: user.email, id: user.id };
+  public async login() {
+    const payload = { };
 
     return this.issueTokens(payload);
   }
