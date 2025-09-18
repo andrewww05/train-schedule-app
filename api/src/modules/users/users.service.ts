@@ -2,33 +2,21 @@ import { Injectable } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
+import { UsersRepository } from './users.repository';
+import { RegisterDto } from '../auth/dto';
 
 @Injectable()
 export class UsersService {
-  private readonly users: User[] = [
-    {
-      id: '1',
-      name: 'John',
-      email: 'john@example.com',
-      passwordHash: 'A!password1234',
-      role: "USER",
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    },
-    {
-      id: '2',
-      name: 'Maria',
-      email: 'maria@example.com',
-      passwordHash: 'A!password12345',
-      role: "USER",
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    },
-  ];
+  constructor(
+    protected readonly usersRepository: UsersRepository,
+  ) {}
 
-
-  create(createUserDto: CreateUserDto) {
-    return 'This action adds a new user';
+  public async create(createUserDto: RegisterDto, passwordHash: string): Promise<User> {
+    return this.usersRepository.createUser({
+      ...createUserDto,
+      passwordHash,
+      role: 'USER'
+    });
   }
 
   findAll() {
@@ -36,11 +24,11 @@ export class UsersService {
   }
 
   public async findOneByEmail(email: string): Promise<User | undefined> {
-    return this.users.find(user => user.email === email);
+    return this.usersRepository.findByEmail(email);
   }
 
   public async findOne(id: string): Promise<User | undefined> {
-    return this.users.find(user => user.id === id);
+    return this.usersRepository.findById(id);
   }
 
   update(id: number, updateUserDto: UpdateUserDto) {

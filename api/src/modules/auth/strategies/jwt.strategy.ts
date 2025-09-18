@@ -4,10 +4,14 @@ import { Strategy, ExtractJwt } from 'passport-jwt';
 import { ConfigService, ConfigType } from '@nestjs/config';
 import { JwtPayload } from '../types';
 import { appConfig } from 'src/config';
+import { UsersService } from 'src/modules/users/users.service';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
-  constructor(private readonly configService: ConfigService) {
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly usersService: UsersService
+  ) {
     const appConf = configService.get<ConfigType<typeof appConfig>>('app');
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
@@ -23,6 +27,14 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       throw new BadRequestException('Invalid token');
     }
 
-    return payload;
+    const user = await this.usersService.findOne(payload.id);
+
+    if (!user) {
+      throw new BadRequestException('Invalid token');
+    }
+
+    const { passwordHash, ...userData } = user; 
+
+    return userData;
   }
 }

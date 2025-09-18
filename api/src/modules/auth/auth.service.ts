@@ -1,12 +1,12 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import { CookieOptions, Response } from 'express';
 import { JwtPayload as JwtPayload } from './types';
 import { ConfigService, ConfigType } from '@nestjs/config';
 import { appConfig } from 'src/config';
-import { LoginDto } from './dto';
-import { User } from '../users/entities/user.entity';
+import { LoginDto, RegisterDto } from './dto';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class AuthService {
@@ -51,23 +51,17 @@ export class AuthService {
 
     return { accessToken, refreshToken };
   }
-
-  public async validateUser(email: string, pass: string): Promise<Omit<User, "passwordHash">|null> {
-    const user = await this.usersService.findOneByEmail(email);
-
-    if (user && user.passwordHash === pass) {
-      const { passwordHash, ...result } = user;
-      return result;
-    }
-
-    return null;
-  }
-
+  
   public async login(dto: LoginDto, res: Response) {
-    const user = await this.validateUser(dto.email, dto.password);
+    const user = await this.usersService.findOneByEmail(dto.email);
 
     if (!user) {
-      throw new NotFoundException();
+      throw new BadRequestException("user_not_exists");
+    } 
+
+    const isMatch: boolean = bcrypt.compareSync(dto.password, user.passwordHash);
+    if (!isMatch) {
+      throw new BadRequestException('password_mismatch');
     }
 
     const { accessToken, refreshToken } = await this.issueTokens({ id: user.id });
@@ -77,14 +71,21 @@ export class AuthService {
     return { accessToken };
   }
 
-  // async register(user: RegisterRequestDto): Promise<AccessToken> {
-  //   const existingUser = await this.usersService.findOneByEmail(user.email);
-  //   if (existingUser) {
-  //     throw new BadRequestException('email already exists');
-  //   }
-  //   const hashedPassword = await bcrypt.hash(user.password, 10);
-  //   const newUser: User = { ...user, password: hashedPassword };
-  //   await this.usersService.create(newUser);
-  //   return this.login(newUser);
-  // }
+ public async register(dto: RegisterDto, res: Response) {
+    const exists = await this.usersService.findOneByEmail(dto.email);
+
+    if (exists) {
+      throw new BadRequestException("user_exists");
+    }
+
+    const password = await bcrypt.hash(dto.password, 10);
+
+    const user = await this.usersService.create(dto, password);
+
+    const { accessToken, refreshToken } = await this.issueTokens({ id: user.id });
+
+    this.addRefreshTokenToResponse(res, refreshToken);
+
+    return { accessToken };
+  }
 }

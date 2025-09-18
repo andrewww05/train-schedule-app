@@ -1,16 +1,11 @@
 import {
   Body,
-  Controller,
-  Get,
-  Post,
+  Controller, Post,
   Request,
-  Res,
-  UseGuards,
-  UsePipes,
-  ValidationPipe,
+  Res, UsePipes,
+  ValidationPipe
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { AuthGuard } from '@nestjs/passport';
 import type { Response } from 'express';
 import { LoginDto, RegisterDto } from './dto';
 
@@ -19,7 +14,7 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   // @UseGuards(AuthGuard('jwt'))
-  
+
   @UsePipes(new ValidationPipe())
   @Post('login')
   public async login(
@@ -37,6 +32,6 @@ export class AuthController {
     @Request() req,
     @Res({ passthrough: true }) res: Response,
   ) {
-    return "ok";
+    return this.authService.register(body, res);
   }
 }
