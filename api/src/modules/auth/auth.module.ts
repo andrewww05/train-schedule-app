@@ -12,12 +12,13 @@ import { appConfig } from 'src/config';
   imports: [
     UsersModule,
     PassportModule,
+    ConfigModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => {
         const appConf = configService.get<ConfigType<typeof appConfig>>('app');
         return {
-          secret: appConf?.jwt_secret
+          secret: appConf?.jwtSecret
         };
       },
       inject: [ConfigService],

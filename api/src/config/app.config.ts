@@ -1,5 +1,6 @@
 import { registerAs } from '@nestjs/config';
 
 export const appConfig = registerAs('app', () => ({
-  jwt_secret: process.env.APP_JWT_SECRET
+  domain: process.env.APP_DOMAIN,
+  jwtSecret: process.env.APP_JWT_SECRET
 }))

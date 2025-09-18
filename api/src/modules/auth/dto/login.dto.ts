@@ -1,4 +1,4 @@
-import { IsEmail, MinLength, Matches } from 'class-validator';
+import { IsEmail, MinLength } from 'class-validator';
 
 export class LoginDto {
     @IsEmail({}, {
@@ -8,9 +8,6 @@ export class LoginDto {
 
     @MinLength(8, {
         message: "password_err_length"
-    })
-    @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/, {
-        message: "password_err_regex"
     })
     password: string;
 }

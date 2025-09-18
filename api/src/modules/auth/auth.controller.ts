@@ -1,25 +1,42 @@
-import { Controller, Post, Request, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  Request,
+  Res,
+  UseGuards,
+  UsePipes,
+  ValidationPipe,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthGuard } from '@nestjs/passport';
+import type { Response } from 'express';
+import { LoginDto, RegisterDto } from './dto';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  @UseGuards(AuthGuard('jwt'))
-  @Post('test')
-  public async test(@Request() req) {
-    return "authorized as "+req.user.email;
-  }
+  // @UseGuards(AuthGuard('jwt'))
   
-  
+  @UsePipes(new ValidationPipe())
   @Post('login')
-  public async login(@Request() req) {
-    return this.authService.login();
+  public async login(
+    @Body() body: LoginDto,
+    @Request() req,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    return this.authService.login(body, res);
   }
 
+  @UsePipes(new ValidationPipe())
   @Post('register')
-  public async register(@Request() req) {
-    return this.authService.login();
+  public async register(
+    @Body() body: RegisterDto,
+    @Request() req,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    return "ok";
   }
 }

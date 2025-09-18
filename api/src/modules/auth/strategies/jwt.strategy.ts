@@ -1,8 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { Strategy, ExtractJwt } from 'passport-jwt';
 import { ConfigService, ConfigType } from '@nestjs/config';
-import { AccessTokenPayload } from '../types';
+import { JwtPayload } from '../types';
 import { appConfig } from 'src/config';
 
 @Injectable()
@@ -12,11 +12,17 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      secretOrKey: appConf?.jwt_secret
+      secretOrKey: appConf?.jwtSecret,
     });
   }
 
-  async validate(payload: AccessTokenPayload) {
+  async validate(payload: JwtPayload) {
+    const { tokenType } = payload;
+
+    if (tokenType !== 'access') {
+      throw new BadRequestException('Invalid token');
+    }
+
     return payload;
   }
 }
