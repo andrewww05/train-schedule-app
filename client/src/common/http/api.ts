@@ -1,8 +1,9 @@
 import ky from 'ky';
+import '@/envConfig';
 
 export default class Api {
     private static kyInstance = ky.create({
-        prefixUrl: process.env.API_URL,
+        prefixUrl: process.env.NEXT_PUBLIC_API_URL,
         headers: {
             'Content-Type': 'application/json',
         },

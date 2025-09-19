@@ -12,6 +12,9 @@ import Typography from '@mui/material/Typography';
 import Card from '@/app/_components/Card';
 import { useTranslations } from 'next-intl';
 import { Controller, SubmitHandler, useForm } from 'react-hook-form';
+import Api from '@/common/http/api';
+import { RequestErrorDialog } from '@/app/_components';
+import { HTTPError } from 'ky';
 
 interface IFormInput {
     email: string
@@ -20,21 +23,45 @@ interface IFormInput {
 
 
 export default function SignIn(props: { disableCustomTheme?: boolean }) {
-    const { control, handleSubmit, formState: { errors } } = useForm({
+    const [errModalOpened, setErrModalOpened] = useState<boolean>(false);
+    
+    const { control, handleSubmit, formState: { errors }, setError } = useForm({
         defaultValues: {
             email: "",
             password: ""
         },
     })
 
-    const onSubmit: SubmitHandler<IFormInput> = (data) => {
-        console.log(data)
+    const onSubmit: SubmitHandler<IFormInput> = async (data) => {
+        try {
+            const res  = await Api.authorized.post('auth/login');
+
+            if (res.status < 200 || res.status > 299) throw Error(res.statusText);
+        } catch (error) {
+            if (error instanceof HTTPError && error.response.status == 400) {
+                const json = await error.response.json();
+
+                json.message.forEach((errorText: string) => {
+                    const field: string = errorText.split('_')[0];
+                    
+                    // @ts-ignore
+                    setError(field, {
+                        type: "required",
+                        message: t(errorText)
+                    });
+                });
+                
+            } else {
+                setErrModalOpened(true);
+            }
+        }
     }
 
     const t = useTranslations("auth");
 
     return (
         <>
+            <RequestErrorDialog open={errModalOpened} setOpen={setErrModalOpened} />
             <Card variant="outlined">
                 <Typography
                     component="h1"
@@ -94,10 +121,6 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
                                 minLength: {
                                     value: 8,
                                     message: t("password_err_length")
-                                },
-                                pattern: {
-                                    value: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
-                                    message: t("password_err_regex")
                                 }
                             }}
                             render={({ field }) => (

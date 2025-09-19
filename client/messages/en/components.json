@@ -1,0 +1,7 @@
+{
+    "components": {
+        "error_request_title": "⚠️ Error occurred during request",
+        "error_request_text": "We couldn’t process your request due to an unexpected error. Please try again later.",
+        "error_request_button": "Got it"
+    }
+}

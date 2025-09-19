@@ -29,6 +29,9 @@ importers:
       '@mui/material-nextjs':
         specifier: ^7.3.2
         version: 7.3.2(@emotion/cache@11.14.0)(@emotion/react@11.14.0(@types/react@19.1.13)(react@19.1.0))(@types/react@19.1.13)(next@15.5.3(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react@19.1.0)
+      '@next/env':
+        specifier: ^15.5.3
+        version: 15.5.3
       '@toolpad/core':
         specifier: ^0.16.0
         version: 0.16.0(9a365b7c803272235b30a863aeddbc8b)
