@@ -11,7 +11,7 @@ export class UsersService {
     protected readonly usersRepository: UsersRepository,
   ) {}
 
-  public async create(createUserDto: RegisterDto, passwordHash: string): Promise<User> {
+  public async create(createUserDto: Omit<RegisterDto, "password">, passwordHash: string): Promise<User> {
     return this.usersRepository.createUser({
       ...createUserDto,
       passwordHash,
@@ -23,11 +23,11 @@ export class UsersService {
     return `This action returns all users`;
   }
 
-  public async findOneByEmail(email: string): Promise<User | undefined> {
+  public async findOneByEmail(email: string): Promise<User | null> {
     return this.usersRepository.findByEmail(email);
   }
 
-  public async findOne(id: string): Promise<User | undefined> {
+  public async findOne(id: string): Promise<User | null> {
     return this.usersRepository.findById(id);
   }
 

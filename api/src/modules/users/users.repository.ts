@@ -14,15 +14,13 @@ export class UsersRepository {
     return this.prisma.user.findMany();
   }
 
-  async findById(id: string): Promise<User> {
+  async findById(id: string): Promise<User|null> {
     const user = await this.prisma.user.findUnique({ where: { id } });
-    if (!user) throw new NotFoundException(`User with id ${id} not found`);
     return user;
   }
 
-  async findByEmail(email: string): Promise<User> {
+  async findByEmail(email: string): Promise<User|null> {
     const user = await this.prisma.user.findUnique({ where: { email } });
-    if (!user) throw new NotFoundException(`User with id ${email} not found`);
     return user;
   }
 

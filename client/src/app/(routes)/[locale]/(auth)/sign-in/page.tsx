@@ -21,7 +21,6 @@ interface IFormInput {
     password: string
 }
 
-
 export default function SignIn(props: { disableCustomTheme?: boolean }) {
     const [errModalOpened, setErrModalOpened] = useState<boolean>(false);
     
@@ -34,14 +33,18 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
 
     const onSubmit: SubmitHandler<IFormInput> = async (data) => {
         try {
-            const res  = await Api.authorized.post('auth/login');
+            const res  = await Api.authorized.post('auth/login', { 
+                json: data
+            });
 
             if (res.status < 200 || res.status > 299) throw Error(res.statusText);
         } catch (error) {
             if (error instanceof HTTPError && error.response.status == 400) {
                 const json = await error.response.json();
-
-                json.message.forEach((errorText: string) => {
+                
+                const messages = Array.isArray(json.message) ? json.message : [json.message];
+                
+                messages.forEach((errorText: string) => {
                     const field: string = errorText.split('_')[0];
                     
                     // @ts-ignore
@@ -51,7 +54,13 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
                     });
                 });
                 
-            } else {
+            } else if (error instanceof HTTPError && error.response.status == 404) {
+                setError("email", {
+                        type: "required",
+                        message: t("email_err_not_exists")
+                    });
+            }
+            else {
                 setErrModalOpened(true);
             }
         }

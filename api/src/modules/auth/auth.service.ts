@@ -1,7 +1,12 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
-import { CookieOptions, Response } from 'express';
+import { CookieOptions, Request, Response } from 'express';
 import { JwtPayload as JwtPayload } from './types';
 import { ConfigService, ConfigType } from '@nestjs/config';
 import { appConfig } from 'src/config';
@@ -51,38 +56,74 @@ export class AuthService {
 
     return { accessToken, refreshToken };
   }
-  
+
   public async login(dto: LoginDto, res: Response) {
     const user = await this.usersService.findOneByEmail(dto.email);
 
     if (!user) {
-      throw new BadRequestException("user_not_exists");
-    } 
-
-    const isMatch: boolean = bcrypt.compareSync(dto.password, user.passwordHash);
-    if (!isMatch) {
-      throw new BadRequestException('password_mismatch');
+      throw new BadRequestException('email_err_not_exists');
     }
 
-    const { accessToken, refreshToken } = await this.issueTokens({ id: user.id });
+    const isMatch: boolean = bcrypt.compareSync(
+      dto.password,
+      user.passwordHash,
+    );
+    if (!isMatch) {
+      throw new BadRequestException('password_err_mismatch');
+    }
+
+    const { accessToken, refreshToken } = await this.issueTokens({
+      id: user.id,
+    });
 
     this.addRefreshTokenToResponse(res, refreshToken);
 
     return { accessToken };
   }
 
- public async register(dto: RegisterDto, res: Response) {
+  public async register(dto: RegisterDto, res: Response) {
     const exists = await this.usersService.findOneByEmail(dto.email);
 
     if (exists) {
-      throw new BadRequestException("user_exists");
+      throw new BadRequestException('user_exists');
     }
 
     const password = await bcrypt.hash(dto.password, 10);
 
-    const user = await this.usersService.create(dto, password);
+    const { password: _, ...userData } = dto;
 
-    const { accessToken, refreshToken } = await this.issueTokens({ id: user.id });
+    const user = await this.usersService.create(userData, password);
+
+    const { accessToken, refreshToken } = await this.issueTokens({
+      id: user.id,
+    });
+
+    this.addRefreshTokenToResponse(res, refreshToken);
+
+    return { accessToken };
+  }
+
+  public async refresh(req: Request, res: Response) {
+    const token = req.cookies['refresh-token'];
+
+    if (!token) throw new UnauthorizedException('Unauthorized');
+
+    let valid: JwtPayload;
+    try {
+      valid = this.jwtService.verify<JwtPayload>(token);
+    } catch (err) {
+      throw new UnauthorizedException('Invalid token');
+    }
+
+    if (!valid || !valid.id || valid.tokenType !== 'refresh') {
+      throw new UnauthorizedException('Unauthorized');
+    }
+
+    const user = await this.usersService.findOne(valid.id);
+
+    const { accessToken, refreshToken } = await this.issueTokens({
+      id: user!.id,
+    });
 
     this.addRefreshTokenToResponse(res, refreshToken);
 

@@ -11,7 +11,7 @@ export class RegisterDto {
     @Matches(/^[A-Za-zА-Яа-яЁёІіЇїЄє\s]+$/, {
         message: "name_err_pattern"
     })
-    mame: string;
+    name: string;
 
     @IsEmail({}, {
         message: "email_invalid"
