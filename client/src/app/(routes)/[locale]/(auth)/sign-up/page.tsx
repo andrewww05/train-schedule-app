@@ -12,6 +12,11 @@ import Typography from '@mui/material/Typography';
 import Card from '@/app/_components/Card';
 import { useTranslations } from 'next-intl';
 import { Controller, SubmitHandler, useForm } from 'react-hook-form';
+import Api from '@/common/http/api';
+import { HTTPError } from 'ky';
+import { RequestErrorDialog } from '@/app/_components';
+import { useRouter } from 'next/navigation';
+import { useAuthStore } from '@/app/_providers';
 
 interface IFormInput {
     name: string
@@ -21,22 +26,67 @@ interface IFormInput {
 
 
 export default function SignIn(props: { disableCustomTheme?: boolean }) {
-    const { control, handleSubmit, formState: { errors } } = useForm({
+    const { control, handleSubmit, formState: { errors }, setError } = useForm({
         defaultValues: {
             name: "",
             email: "",
             password: ""
         },
-    })
+    });
 
-    const onSubmit: SubmitHandler<IFormInput> = (data) => {
-        console.log(data)
+    const { setAccessToken } = useAuthStore((state) => state);
+
+    const router = useRouter();
+
+    const [errModalOpened, setErrModalOpened] = useState<boolean>(false);
+
+    const onSubmit: SubmitHandler<IFormInput> = async (data) => {
+        try {
+            const res = await Api.raw.post('auth/register', {
+                json: data
+            });
+
+            if (res.status < 200 || res.status > 299) throw Error(res.statusText);
+
+            const json = await res.json();
+            const accessToken = (json as any).accessToken;
+            
+            setAccessToken(accessToken);
+
+            router.push('/');
+        } catch (error) {
+            if (error instanceof HTTPError && error.response.status == 400) {
+                const json = await error.response.json();
+
+                const messages = Array.isArray(json.message) ? json.message : [json.message];
+
+                messages.forEach((errorText: string) => {
+                    const field: string = errorText.split('_')[0];
+
+                    // @ts-ignore
+                    setError(field, {
+                        type: "required",
+                        message: t(errorText)
+                    });
+                });
+
+            } else if (error instanceof HTTPError && error.response.status == 404) {
+                setError("email", {
+                    type: "required",
+                    message: t("email_err_not_exists")
+                });
+            }
+            else {
+                setErrModalOpened(true);
+            }
+        }
     }
 
     const t = useTranslations("auth");
 
     return (
         <>
+            <RequestErrorDialog open={errModalOpened} setOpen={setErrModalOpened} />
             <Card variant="outlined">
                 <Typography
                     component="h1"

@@ -1,12 +1,11 @@
 import {
   BadRequestException,
   Injectable,
-  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
-import { CookieOptions, Request, Response } from 'express';
+import { Request, Response } from 'express';
 import { JwtPayload as JwtPayload } from './types';
 import { ConfigService, ConfigType } from '@nestjs/config';
 import { appConfig } from 'src/config';
@@ -85,7 +84,7 @@ export class AuthService {
     const exists = await this.usersService.findOneByEmail(dto.email);
 
     if (exists) {
-      throw new BadRequestException('user_exists');
+      throw new BadRequestException('email_err_exists');
     }
 
     const password = await bcrypt.hash(dto.password, 10);
@@ -128,5 +127,11 @@ export class AuthService {
     this.addRefreshTokenToResponse(res, refreshToken);
 
     return { accessToken };
+  }
+
+  public async logout(req: Request, res: Response) {
+    this.removeRefreshTokenFromResponse(res);
+
+    return { message: "Success" };
   }
 }

@@ -11,6 +11,8 @@ import { LinearProgress } from "@mui/material";
 import { NextAppProvider } from "@toolpad/core/nextjs";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages } from "next-intl/server";
+import { AuthStoreProvider } from "./_providers";
+import AuthProvider from "./_providers/AuthProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -41,9 +43,13 @@ export default async function RootLayout({
       >
         <NextIntlClientProvider messages={messages}>
           <AppRouterCacheProvider options={{ enableCssLayer: true }}>
-            <Suspense fallback={<LinearProgress />}>
-              {children}
-            </Suspense>
+            <AuthStoreProvider>
+              <AuthProvider>
+                <Suspense fallback={<LinearProgress />}>
+                  {children}
+                </Suspense>
+              </AuthProvider>
+            </AuthStoreProvider>
           </AppRouterCacheProvider>
         </NextIntlClientProvider>
       </body>

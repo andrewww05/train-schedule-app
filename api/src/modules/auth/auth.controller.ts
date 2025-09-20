@@ -5,12 +5,14 @@ import {
   Post,
   Request,
   Res,
+  UseGuards,
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import type { Response } from 'express';
 import { LoginDto, RegisterDto } from './dto';
+import { AuthGuard } from '@nestjs/passport';
 
 @Controller('auth')
 export class AuthController {
@@ -42,5 +44,14 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
   ) {
     return this.authService.refresh(req, res);
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Get('logout')
+  public async logout(
+    @Request() req,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    return this.authService.logout(req, res);
   }
 }

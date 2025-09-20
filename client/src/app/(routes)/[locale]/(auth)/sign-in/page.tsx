@@ -15,6 +15,8 @@ import { Controller, SubmitHandler, useForm } from 'react-hook-form';
 import Api from '@/common/http/api';
 import { RequestErrorDialog } from '@/app/_components';
 import { HTTPError } from 'ky';
+import { useRouter } from 'next/navigation';
+import { useAuthStore } from '@/app/_providers';
 
 interface IFormInput {
     email: string
@@ -23,7 +25,12 @@ interface IFormInput {
 
 export default function SignIn(props: { disableCustomTheme?: boolean }) {
     const [errModalOpened, setErrModalOpened] = useState<boolean>(false);
+    const [isLoading, setIsLoading] = useState<boolean>(false);
     
+    const { setAccessToken } = useAuthStore((state) => state);
+
+    const router = useRouter();
+
     const { control, handleSubmit, formState: { errors }, setError } = useForm({
         defaultValues: {
             email: "",
@@ -33,11 +40,19 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
 
     const onSubmit: SubmitHandler<IFormInput> = async (data) => {
         try {
-            const res  = await Api.authorized.post('auth/login', { 
+            setIsLoading(true);
+            const res  = await Api.raw.post('auth/login', { 
                 json: data
             });
 
             if (res.status < 200 || res.status > 299) throw Error(res.statusText);
+
+            const json = await res.json();
+            const accessToken = (json as any).accessToken;
+
+            setAccessToken(accessToken);
+
+            router.push('/');
         } catch (error) {
             if (error instanceof HTTPError && error.response.status == 400) {
                 const json = await error.response.json();
@@ -63,6 +78,8 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
             else {
                 setErrModalOpened(true);
             }
+        } finally {
+            setIsLoading(false);
         }
     }
 
@@ -154,6 +171,7 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
                         type="submit"
                         fullWidth
                         variant="contained"
+                        loading={isLoading}
                     >
                         {t("sign_in")}
                     </Button>
